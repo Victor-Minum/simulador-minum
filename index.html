@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador Minum Energia</title>
+  <style>
+    :root {
+      --ink: #043f36;
+      --ink-2: #005446;
+      --brand: #009b83;
+      --brand-light: #00d0aa;
+      --brand-soft: #e5f5f1;
+      --line: #d4dae0;
+      --muted: #64706d;
+      --paper: #ffffff;
+      --screen: #eef3f1;
+      --gray-bar: #cfd3d9;
+      --gray-dark: #6f7478;
+      --shadow: 0 18px 50px rgba(5, 45, 38, .14);
+      --radius: 8px;
+      --a4-w: 794px;
+      --a4-h: 1123px;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 8%, rgba(0, 208, 170, .13), transparent 32%),
+        linear-gradient(135deg, #f5faf8 0%, var(--screen) 100%);
+      min-height: 100vh;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .control-panel {
+      position: sticky;
+      top: 18px;
+      padding: 20px;
+      background: var(--paper);
+      border: 1px solid rgba(4, 63, 54, .12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-kicker {
+      margin: 0 0 4px;
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .control-panel h1 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      line-height: 1.08;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 40px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fbfdfc;
+      border: 1px solid #cbd8d5;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(0, 155, 131, .14);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .btn-secondary {
+      color: var(--ink);
+      background: var(--brand-soft);
+      border: 1px solid rgba(0, 84, 70, .15);
+    }
+
+    .screen-hint {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .preview-wrap {
+      overflow-x: auto;
+      padding-bottom: 18px;
+    }
+
+    .proposal {
+      width: var(--a4-w);
+      min-height: var(--a4-h);
+      margin: 0 auto;
+      padding: 14px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .proposal-page {
+      display: flex;
+      min-height: calc(var(--a4-h) - 28px);
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 315px;
+      padding: 30px 30px 20px;
+      color: #fff;
+      background:
+        radial-gradient(ellipse at 74% -10%, rgba(0, 179, 151, .65), transparent 32%),
+        radial-gradient(ellipse at 24% 48%, rgba(0, 157, 133, .55), transparent 36%),
+        linear-gradient(130deg, #004235 0%, #00362f 48%, #00725f 100%);
+      border-radius: var(--radius);
+    }
+
+    .hero::before,
+    .hero::after {
+      position: absolute;
+      content: "";
+      pointer-events: none;
+      border-radius: 50%;
+    }
+
+    .hero::before {
+      width: 530px;
+      height: 530px;
+      right: -115px;
+      top: -275px;
+      border: 10px solid rgba(0, 27, 22, .58);
+      box-shadow: -72px 84px 55px rgba(0, 20, 17, .22);
+      transform: rotate(-18deg);
+    }
+
+    .hero::after {
+      width: 560px;
+      height: 190px;
+      left: 80px;
+      top: -18px;
+      background: linear-gradient(112deg, transparent 8%, rgba(0, 30, 26, .55), rgba(0, 137, 116, .28), transparent 76%);
+      filter: blur(7px);
+      transform: rotate(-11deg);
+    }
+
+    .hero-top,
+    .hero-data {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .headline {
+      margin: 0;
+      max-width: 300px;
+      font-size: 32px;
+      line-height: 1.08;
+      font-weight: 900;
+    }
+
+    .headline span {
+      color: var(--brand-light);
+    }
+
+    .logo {
+      width: 122px;
+      margin-top: 4px;
+      color: #fff;
+    }
+
+    .logo svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .hero-data {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 16px 24px;
+      margin-top: 46px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, .13);
+    }
+
+    .data-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .data-label {
+      display: block;
+      color: rgba(255, 255, 255, .78);
+      font-size: 13px;
+      line-height: 1.1;
+    }
+
+    .data-value {
+      display: block;
+      margin-top: 2px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.18;
+      text-transform: uppercase;
+    }
+
+    .economy-section {
+      display: grid;
+      grid-template-columns: 1fr 175px;
+      gap: 14px;
+      padding: 0 24px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 10px;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .section-heading strong {
+      font-weight: 900;
+    }
+
+    .money-icon {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      place-items: center;
+      color: #fff;
+      background: var(--ink);
+      border-radius: 6px;
+      font-size: 27px;
+      font-weight: 700;
+    }
+
+    .chart {
+      display: grid;
+      grid-template-columns: repeat(2, 132px);
+      justify-content: center;
+      gap: 58px;
+      align-items: end;
+      min-height: 300px;
+      padding-top: 6px;
+    }
+
+    .bar-group {
+      display: grid;
+      gap: 8px;
+      align-items: end;
+      justify-items: center;
+    }
+
+    .bar-stack {
+      position: relative;
+      display: flex;
+      width: 118px;
+      height: 245px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .baseline {
+      width: 100%;
+      height: 3px;
+      align-self: end;
+      margin-bottom: 0;
+      background: #d9dde2;
+      border-radius: 999px;
+    }
+
+    .bar {
+      position: absolute;
+      bottom: 0;
+      display: flex;
+      width: 118px;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 9px;
+      border-radius: 8px 8px 0 0;
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .bar b,
+    .bar strong {
+      display: block;
+    }
+
+    .bar b {
+      margin-bottom: 3px;
+      font-size: 11px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .bar strong {
+      font-size: 13px;
+    }
+
+    .bar.gray {
+      color: #17201e;
+      background: var(--gray-bar);
+    }
+
+    .bar.savings {
+      color: #fff;
+      background: #008563;
+      border-radius: 0;
+    }
+
+    .bar.empty-top {
+      bottom: auto;
+      color: var(--brand);
+      background: #edf4f2;
+      border: 2px dashed var(--brand);
+      border-radius: 8px 8px 0 0;
+      z-index: 2;
+    }
+
+    .bar-label {
+      min-height: 18px;
+      color: var(--ink);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .bar-caption {
+      color: #1e2f2b;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .cards {
+      display: grid;
+      align-content: center;
+      align-self: center;
+      gap: 0;
+    }
+
+    .metric-card {
+      display: grid;
+      min-height: 84px;
+      place-items: center;
+      padding: 10px 8px;
+      color: var(--brand);
+      background: #fff;
+      border: 1px solid #dbe7e4;
+      text-align: center;
+    }
+
+    .metric-card:first-child {
+      min-height: 92px;
+      color: #fff;
+      background: var(--brand);
+      border-color: var(--brand);
+      border-radius: 5px 5px 0 0;
+    }
+
+    .metric-card:last-child {
+      border-radius: 0 0 5px 5px;
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 36px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .metric-card small {
+      display: block;
+      margin-top: 5px;
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .metric-card:not(:first-child) strong {
+      font-size: 27px;
+      font-weight: 500;
+    }
+
+    .annual {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      align-items: center;
+      margin: 0 24px;
+      padding: 15px 22px;
+      color: #fff;
+      background: var(--brand);
+      border-radius: 6px;
+    }
+
+    .annual strong {
+      font-size: 33px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .annual span {
+      justify-self: end;
+      font-size: 15px;
+      line-height: 1.2;
+      text-align: right;
+      text-transform: uppercase;
+    }
+
+    .annual small {
+      display: block;
+      margin-top: 4px;
+      font-size: 8px;
+      letter-spacing: .03em;
+    }
+
+    .flags {
+      margin: 0 24px;
+      padding: 12px 14px;
+      background: #f6faf9;
+      border: 1px solid #d9e8e4;
+      border-radius: 6px;
+    }
+
+    .flags-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .flag-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .flag-card {
+      padding: 8px 7px;
+      background: #fff;
+      border: 1px solid #d8e3e0;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .flag-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 4px;
+      border-radius: 50%;
+      vertical-align: -1px;
+    }
+
+    .flag-green {
+      background: #00a878;
+    }
+
+    .flag-yellow {
+      background: #f0c33c;
+    }
+
+    .flag-red-1 {
+      background: #d84b3a;
+    }
+
+    .flag-red-2 {
+      background: #a91f1f;
+    }
+
+    .flag-card b {
+      display: block;
+      margin-top: 3px;
+      color: var(--brand);
+      font-size: 16px;
+    }
+
+    .notes {
+      margin: 0 32px;
+      padding-left: 14px;
+      color: #17443b;
+      font-size: 8.7px;
+      line-height: 1.22;
+    }
+
+    .notes li {
+      margin-bottom: 3px;
+    }
+
+    .benefits {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      margin-top: auto;
+      padding: 14px 20px;
+      color: #fff;
+      background: var(--brand);
+    }
+
+    .benefit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-size: 13px;
+      line-height: 1.05;
+    }
+
+    .benefit svg {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 auto;
+      stroke: #fff;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    @media (max-width: 1120px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .control-panel {
+        position: static;
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .actions {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        padding: 12px;
+      }
+
+      .form-grid,
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .proposal {
+        transform: scale(.58);
+        transform-origin: top left;
+        margin-right: calc(var(--a4-w) * -.42);
+        margin-bottom: calc(var(--a4-h) * -.42);
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      *,
+      *::before,
+      *::after {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      html,
+      body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        background: #fff;
+      }
+
+      .control-panel {
+        display: none;
+      }
+
+      .app-shell,
+      .preview-wrap {
+        display: block;
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .proposal {
+        width: 210mm;
+        min-height: 297mm;
+        height: 297mm;
+        margin: 0;
+        padding: 3.5mm;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .proposal-page {
+        min-height: calc(297mm - 7mm);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="control-panel" aria-label="Dados da simulação">
+      <p class="panel-kicker">Minum Energia</p>
+      <h1>Simulador prévio de economia</h1>
+
+      <form class="form-grid" id="simulationForm">
+        <label>
+          Nome do cliente
+          <input id="clientName" name="clientName" type="text" value="ALEX GOMES DE ALMEIDA BRAGA" autocomplete="name">
+        </label>
+
+        <label>
+          Valor atual da fatura
+          <input id="billValue" name="billValue" type="text" inputmode="decimal" value="7203,00">
+        </label>
+
+        <label>
+          Percentual de desconto
+          <input id="discount" name="discount" type="number" min="10" max="35" step="0.1" value="20">
+        </label>
+
+        <label>
+          Nome do vendedor
+          <input id="sellerName" name="sellerName" type="text" value="Equipe Minum">
+        </label>
+
+        <label>
+          Distribuidora
+          <select id="utility" name="utility">
+            <option>Energisa MS</option>
+            <option>Energisa MT</option>
+            <option selected>Equatorial GO</option>
+            <option>Equatorial PA</option>
+            <option>Equatorial MA</option>
+          </select>
+        </label>
+
+        <label>
+          Data da simulação
+          <input id="simulationDate" name="simulationDate" type="date">
+        </label>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button" id="printButton">Gerar PDF</button>
+          <button class="btn btn-secondary" type="button" id="clearButton">Limpar</button>
+        </div>
+      </form>
+
+      <p class="screen-hint">A prévia ao lado é atualizada automaticamente. Para gerar o PDF, use o botão e salve a impressão como PDF.</p>
+    </aside>
+
+    <section class="preview-wrap" aria-label="Prévia da proposta">
+      <article class="proposal" id="proposal">
+        <div class="proposal-page">
+          <header class="hero">
+            <div class="hero-top">
+              <h2 class="headline">Olá, seu <span>Plano Minum</span> chegou!</h2>
+              <div class="logo" aria-label="Minum">
+                <svg viewBox="280 360 1360 350" role="img" aria-label="Minum">
+                  <g transform="translate(0 1080) scale(1 -1)">
+                    <path fill="currentColor" d="M745.245 656.882 C745.245 638.256 730.145 623.156 711.521 623.156 C692.895 623.156 677.795 638.256 677.795 656.882 C677.795 675.506 692.895 690.606 711.521 690.606 C730.145 690.606 745.245 675.506 745.245 656.882"/>
+                    <path fill="currentColor" d="M683.952 417.354 L739.09 417.354 L739.09 589.087 L683.952 589.087 Z"/>
+                    <path fill="currentColor" d="M683.947 417.354 L739.085 417.354 L739.085 392.794 L683.947 392.794 Z"/>
+                    <path fill="currentColor" d="M624 523.868 L624 392.794 L567.105 392.794 L567.105 551.55 L489.921 551.55 L489.921 392.794 L433.45 392.794 L433.45 551.55 L359.781 551.55 L359.781 392.794 L303.282 392.794 L303.282 585.949 C356.272 594.403 416.043 599.993 466.659 585.266 C524.149 602.08 624 604.698 624 523.868"/>
+                    <path fill="currentColor" d="M938.527 588.754 C901.38 596.377 840.376 591.616 801.048 585.016 L801.048 392.794 L857.094 392.794 L857.094 551.551 L933.71 551.551 L933.71 392.794 L990.294 392.794 L990.294 517.718 C990.436 554.442 980.887 580.566 938.527 588.754"/>
+                    <path fill="currentColor" d="M1616.717 523.868 L1616.717 392.794 L1559.821 392.794 L1559.821 551.55 L1482.638 551.55 L1482.638 392.794 L1426.167 392.794 L1426.167 551.55 L1352.498 551.55 L1352.498 392.794 L1295.999 392.794 L1295.999 585.949 C1348.988 594.403 1408.759 599.993 1459.376 585.266 C1516.865 602.08 1616.717 604.698 1616.717 523.868"/>
+                    <path fill="currentColor" d="M1098.421 393.304 C1135.567 385.681 1196.571 390.442 1235.9 397.044 L1235.9 589.264 L1179.854 589.264 L1179.854 430.507 L1103.238 430.507 L1103.238 589.264 L1046.654 589.264 L1046.654 464.339 C1046.512 427.616 1056.061 401.492 1098.421 393.304"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <div class="hero-data">
+              <div class="data-item">
+                <span class="data-label">Nome</span>
+                <span class="data-value" id="outClientName">ALEX GOMES DE ALMEIDA BRAGA</span>
+              </div>
+              <div class="data-item">
+                <span class="data-label">Distribuidora</span>
+                <span class="data-value" id="outUtility">Equatorial GO</span>
+              </div>
+              <div class="data-item">
+                <span class="data-label">Data da simulação</span>
+                <span class="data-value" id="outDate">12/06/2026</span>
+              </div>
+              <div class="data-item">
+                <span class="data-label">Vendedor</span>
+                <span class="data-value" id="outSeller">Equipe Minum</span>
+              </div>
+              <div class="data-item">
+                <span class="data-label">Referência atual</span>
+                <span class="data-value" id="outReference">Valor da fatura informado</span>
+              </div>
+              <div class="data-item">
+                <span class="data-label">Tipo de simulação</span>
+                <span class="data-value">Prévia comercial</span>
+              </div>
+            </div>
+          </header>
+
+          <section class="economy-section">
+            <div>
+              <h3 class="section-heading"><span class="money-icon">$</span><span>Confira sua economia<br>com o <strong>Plano Minum</strong></span></h3>
+
+              <div class="chart" aria-label="Gráfico de economia">
+                <div class="bar-group">
+                  <div class="bar-stack">
+                    <div class="bar gray" id="barCurrent" style="height: 245px;"><span><b>Fatura atual</b><strong id="outCurrentBar">R$ 7.203</strong></span></div>
+                  </div>
+                  <div class="bar-label">Fatura atual</div>
+                  <div class="bar-caption">Distribuidora</div>
+                </div>
+
+                <div class="bar-group">
+                  <div class="bar-stack">
+                    <div class="bar empty-top" id="barSavingsTop" style="height: 70px; bottom: 175px;"><span><b>Economia</b><strong id="outSavingsTop">R$ 1.441</strong></span></div>
+                    <div class="bar savings" id="barSavings" style="height: 175px;"><span><b>Minum</b><strong id="outMinumBar">R$ 5.762</strong></span></div>
+                  </div>
+                  <div class="bar-label">Valor estimado</div>
+                  <div class="bar-caption">Plano Minum</div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="cards" aria-label="Indicadores da simulação">
+              <div class="metric-card">
+                <div><strong id="outDiscount">20,0%</strong><small>de desconto<br>no valor total</small></div>
+              </div>
+              <div class="metric-card">
+                <div><strong>100,0%</strong><small>de desconto<br>em bandeiras</small></div>
+              </div>
+            </aside>
+          </section>
+
+          <section class="annual" aria-label="Economia estimada por ano">
+            <strong id="outAnnual">R$ 17.288</strong>
+            <span>Economia estimada por ano<small>sem qualquer necessidade de investimento</small></span>
+          </section>
+
+          <section class="flags" aria-label="Bandeiras tarifárias">
+            <div class="flags-title">
+              <span>Isenção completa de bandeiras tarifárias</span>
+              <span>Desconto efetivo estimado</span>
+            </div>
+            <div class="flag-grid">
+              <div class="flag-card"><span><i class="flag-dot flag-green"></i>Verde</span><b id="flagGreen">20,0%</b></div>
+              <div class="flag-card"><span><i class="flag-dot flag-yellow"></i>Amarela</span><b id="flagYellow">21,9%</b></div>
+              <div class="flag-card"><span><i class="flag-dot flag-red-1"></i>Vermelha 1</span><b id="flagRed1">24,4%</b></div>
+              <div class="flag-card"><span><i class="flag-dot flag-red-2"></i>Vermelha 2</span><b id="flagRed2">27,8%</b></div>
+            </div>
+          </section>
+
+          <ol class="notes">
+            <li>A economia estimada considera o valor atual da fatura informado pelo cliente e é calculada para os próximos 12 meses.</li>
+            <li>Esta simulação é prévia, comercial e não substitui a análise de elegibilidade, validação cadastral e condições contratuais aplicáveis.</li>
+            <li>O valor estimado com o Plano Minum considera apenas o desconto aplicado sobre o valor em reais da fatura atual, sem cálculo de kWh.</li>
+            <li>O cliente mantém isenção completa de bandeiras tarifárias na parcela de energia compensada, elevando o desconto efetivo em cenários de bandeira amarela e vermelha.</li>
+            <li>Condições finais podem variar conforme distribuidora, disponibilidade, regras regulatórias e dados confirmados na contratação.</li>
+          </ol>
+
+          <footer class="benefits">
+            <div class="benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>
+              <span>Economia<br>Imediata</span>
+            </div>
+            <div class="benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13a8 8 0 1 0 2.3-5.7"/><path d="M4 5v5h5"/><path d="M12 8v5l3 2"/></svg>
+              <span>Medição<br>Inteligente</span>
+            </div>
+            <div class="benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
+              <span>Conta Única<br>de Energia</span>
+            </div>
+            <div class="benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.9 19.1 1.4-1.4"/><path d="m17.7 6.3 1.4-1.4"/></svg>
+              <span>Energia Limpa<br>sem Obras</span>
+            </div>
+            <div class="benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"/><path d="M8 7V5h8v2"/><path d="M15 13h5"/><path d="M17.5 10.5v5"/></svg>
+              <span>Plano sem<br>Fidelidade</span>
+            </div>
+          </footer>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("simulationForm");
+    const fields = {
+      clientName: document.getElementById("clientName"),
+      billValue: document.getElementById("billValue"),
+      discount: document.getElementById("discount"),
+      sellerName: document.getElementById("sellerName"),
+      utility: document.getElementById("utility"),
+      simulationDate: document.getElementById("simulationDate")
+    };
+
+    const outputs = {
+      clientName: document.getElementById("outClientName"),
+      utility: document.getElementById("outUtility"),
+      date: document.getElementById("outDate"),
+      seller: document.getElementById("outSeller"),
+      reference: document.getElementById("outReference"),
+      currentBar: document.getElementById("outCurrentBar"),
+      savingsTop: document.getElementById("outSavingsTop"),
+      minumBar: document.getElementById("outMinumBar"),
+      discount: document.getElementById("outDiscount"),
+      annual: document.getElementById("outAnnual"),
+      flagGreen: document.getElementById("flagGreen"),
+      flagYellow: document.getElementById("flagYellow"),
+      flagRed1: document.getElementById("flagRed1"),
+      flagRed2: document.getElementById("flagRed2"),
+      barSavings: document.getElementById("barSavings"),
+      barSavingsTop: document.getElementById("barSavingsTop")
+    };
+
+    const moneyFormatter = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0
+    });
+
+    const fullMoneyFormatter = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    const percentFormatter = new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
+
+    function parseBrazilianMoney(value) {
+      const normalized = String(value || "")
+        .replace(/[^\d,.-]/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".");
+
+      const parsed = Number.parseFloat(normalized);
+      return Number.isFinite(parsed) ? Math.max(parsed, 0) : 0;
+    }
+
+    function formatPercent(value) {
+      return `${percentFormatter.format(Math.max(value, 0))}%`;
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const [year, month, day] = value.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function fitName(value) {
+      const clean = String(value || "Cliente Minum").trim();
+      return clean || "Cliente Minum";
+    }
+
+    function updateSimulation() {
+      const bill = parseBrazilianMoney(fields.billValue.value);
+      const discount = Math.min(Math.max(Number(fields.discount.value) || 10, 10), 35);
+      const savings = bill * discount / 100;
+      const minumValue = Math.max(bill - savings, 0);
+      const annual = savings * 12;
+      const totalBarHeight = 245;
+      const rawSavingsHeight = bill > 0 ? Math.round((savings / bill) * totalBarHeight) : 0;
+      const savingsHeight = savings <= 0 ? 0 : Math.min(Math.max(rawSavingsHeight, 70), totalBarHeight);
+      const minumHeight = Math.max(totalBarHeight - savingsHeight, 0);
+
+      outputs.clientName.textContent = fitName(fields.clientName.value);
+      outputs.utility.textContent = fields.utility.value;
+      outputs.date.textContent = formatDate(fields.simulationDate.value);
+      outputs.seller.textContent = fitName(fields.sellerName.value);
+      outputs.reference.textContent = fullMoneyFormatter.format(bill);
+      outputs.currentBar.textContent = moneyFormatter.format(bill);
+      outputs.savingsTop.textContent = moneyFormatter.format(savings);
+      outputs.minumBar.textContent = moneyFormatter.format(minumValue);
+      outputs.discount.textContent = formatPercent(discount);
+      outputs.annual.textContent = moneyFormatter.format(annual);
+      outputs.flagGreen.textContent = formatPercent(discount);
+      outputs.flagYellow.textContent = formatPercent(discount + 1.9);
+      outputs.flagRed1.textContent = formatPercent(discount + 4.4);
+      outputs.flagRed2.textContent = formatPercent(discount + 7.8);
+      outputs.barSavings.style.height = `${minumHeight}px`;
+      outputs.barSavingsTop.style.height = `${savingsHeight}px`;
+      outputs.barSavingsTop.style.bottom = `${minumHeight}px`;
+      outputs.barSavingsTop.style.display = savingsHeight > 0 ? "flex" : "none";
+    }
+
+    function setToday() {
+      const today = new Date();
+      const offset = today.getTimezoneOffset();
+      const local = new Date(today.getTime() - offset * 60 * 1000);
+      fields.simulationDate.value = local.toISOString().slice(0, 10);
+    }
+
+    form.addEventListener("input", updateSimulation);
+    form.addEventListener("change", updateSimulation);
+
+    fields.billValue.addEventListener("blur", () => {
+      const value = parseBrazilianMoney(fields.billValue.value);
+      fields.billValue.value = value.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      updateSimulation();
+    });
+
+    fields.discount.addEventListener("blur", () => {
+      const value = Math.min(Math.max(Number(fields.discount.value) || 10, 10), 35);
+      fields.discount.value = Number.isInteger(value) ? String(value) : String(value.toFixed(1));
+      updateSimulation();
+    });
+
+    document.getElementById("printButton").addEventListener("click", () => {
+      updateSimulation();
+      window.print();
+    });
+
+    document.getElementById("clearButton").addEventListener("click", () => {
+      fields.clientName.value = "";
+      fields.billValue.value = "0,00";
+      fields.discount.value = "20";
+      fields.sellerName.value = "";
+      fields.utility.value = "Energisa MS";
+      setToday();
+      updateSimulation();
+    });
+
+    setToday();
+    updateSimulation();
+  </script>
+</body>
+</html>
